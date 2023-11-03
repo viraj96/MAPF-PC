@@ -74,6 +74,10 @@ public:
   void clearSearchEngines();
   virtual  ~CBS();
 
+  vector<Path*> getPaths() {
+    return paths;
+  }
+
   // Save results
   void saveResults(const string& fileName, const string& instanceName) const;
 
