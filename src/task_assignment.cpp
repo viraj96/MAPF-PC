@@ -139,6 +139,27 @@ int main(int argc, char** argv) {
     pbs.runtime = runtime;
     if (vm.count("output"))
       pbs.saveResults(vm["output"].as<string>(), vm["agents"].as<string>());
+    vector<Path*> paths = pbs.getPaths();
+    cout << "TASK PATHS" << endl;
+    for (int i = 0; i < vm["agentNum"].as<int>(); i++) {
+      bool previousLocationWasGoal = true;
+      cout << "Agent " << i << endl;
+      for (int j = 0; j < paths[i]->size(); j++) {
+        cout << paths[i]->at(j).location;
+        if (previousLocationWasGoal) {
+          cout << " @ " << j;
+          previousLocationWasGoal = false;
+        }
+        if (std::find(paths[i]->timestamps.begin(), paths[i]->timestamps.end(),
+                      j) != paths[i]->timestamps.end()) {
+          previousLocationWasGoal = true;
+          //   cout << " *";
+        }
+        cout << " -> ";
+      }
+      cout << endl;
+    }
+    cout << "Agent " << vm["agentNum"].as<int>() << endl;
     pbs.clearSearchEngines();
   } else if (vm["solver"].as<string>() == "PBSN") {
     PBS_naive pbs(instance, vm["screen"].as<int>());
