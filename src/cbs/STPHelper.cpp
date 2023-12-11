@@ -45,17 +45,20 @@ void STPHelper::propagate_root(CBSNode* root, vector<ConstraintTable>& initial_c
       if (a1 == a2){
         continue;
       }
-      for (auto cons: search_engines[0]->instance.temporal_cons[a1 * num_of_agents + a2]){
-        auto from_landmark = cons.first;
-        auto to_landmark = cons.second;
+      if (!search_engines[0]->instance.temporal_cons.empty()) {
+        for (auto cons: search_engines[0]->instance.temporal_cons[a1 * num_of_agents + a2]){
+          auto from_landmark = cons.first;
+          auto to_landmark = cons.second;
 
-        cout << "add con" <<
-          a1 << "("  << from_landmark<< ")"
-             << a2 << "("  << to_landmark<< ")" << endl;
-        // we should have (paths[a1]->timestamps[from_landmark] < paths[a2]->timestamps[to_landmark])
-        tp.add_edge(std::to_string(a2) + "_" + std::to_string(to_landmark),
-                    std::to_string(a1) + "_" + std::to_string(from_landmark),
-                    -1);
+          cout << "add con" <<
+            a1 << "("  << from_landmark<< ")"
+              << a2 << "("  << to_landmark<< ")" << endl;
+          // we should have (paths[a1]->timestamps[from_landmark] < paths[a2]->timestamps[to_landmark])
+          tp.add_edge(std::to_string(a2) + "_" + std::to_string(to_landmark),
+                      std::to_string(a1) + "_" + std::to_string(from_landmark),
+                      -1);
+        }
+
       }
     }
   }

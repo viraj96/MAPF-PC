@@ -113,7 +113,7 @@ bool TaskAssignment::loadKivaAgentsAndTasks() {
   num_of_tasks = 2 * taskNum;
   task_locations.resize(num_of_tasks);
 
-  for (int i = 0; i < num_of_tasks; i += 2) {
+  for (int i = 0; i < num_of_tasks - 1; i += 2) {
     int releaseTime, startTask, goalTask, timeOfStartTask, timeOfGoalTask;
     getline(file, line);
     stringLine.clear();
@@ -129,7 +129,7 @@ bool TaskAssignment::loadKivaAgentsAndTasks() {
     assert(!isObstacle(task_locations[i]));
     assert(!isObstacle(task_locations[i + 1]));
 
-    temporal_dependecies.emplace_back(i, i + 1);
+    // temporal_dependecies.emplace_back(i, i + 1);
   }
 
   cout << "#agents: " << num_of_agents << "\t#tasks: " << num_of_tasks
@@ -259,7 +259,7 @@ void TaskAssignment::find_greedy_plan() {
 
   int task_cnt = 0;
 
-  while (task_cnt < num_of_tasks) {
+  while (task_cnt < num_of_tasks/2) {
     int timestep, i;
     std::tie(timestep, i) = q.top();
 
@@ -270,7 +270,7 @@ void TaskAssignment::find_greedy_plan() {
 
     int selected_task = -1;
     int selected_task_timestep = -1;
-    for (int j = 0; j < num_of_tasks; j++) {
+    for (int j = 0; j < num_of_tasks - 1; j+=2) {
       if (task_complete_timestep[j] != -1) {
         continue;
       }
@@ -295,17 +295,27 @@ void TaskAssignment::find_greedy_plan() {
     }
     // assign the task
     if (selected_task != -1) {
-      cout << "assign task " << selected_task << " to agent " << i
-           << " with distance "
-           << search_engine->my_heuristic[selected_task][loc] << endl;
+      
+      cout << "assign tasks " << selected_task << " and " << selected_task + 1 << " to agent " << i << " with distance " << search_engine->my_heuristic[selected_task][loc] + search_engine->my_heuristic[selected_task+1][task_locations[selected_task]] << endl;
       task_plan[i].push_back(selected_task);
-      agent_last_timestep[i] = selected_task_timestep;
-      task_complete_timestep[selected_task] = selected_task_timestep;
-      agent_last_location[i] = task_locations[selected_task];
+      task_plan[i].push_back(selected_task + 1);
+      agent_last_timestep[i] = selected_task_timestep + search_engine->my_heuristic[selected_task+1][task_locations[selected_task]];
+      task_complete_timestep[selected_task] = selected_task_timestep + search_engine->my_heuristic[selected_task+1][task_locations[selected_task]];
+      agent_last_location[i] = task_locations[selected_task + 1];
+      
+      // cout << "assign task " << selected_task << " to agent " << i
+      //      << " with distance "
+      //      << search_engine->my_heuristic[selected_task][loc] << endl;
+      // task_plan[i].push_back(selected_task);
+      // agent_last_timestep[i] = selected_task_timestep;
+      // task_complete_timestep[selected_task] = selected_task_timestep;
+      // agent_last_location[i] = task_locations[selected_task];
       task_cnt++;
     }
     q.push({agent_last_timestep[i], i});
   }
+  
+  agent_last_location = start_locations;
 
   // check whether two agent has same goal location
 
@@ -334,31 +344,34 @@ void TaskAssignment::find_greedy_plan() {
   }
 
   // write plan to goal_locations and temporal_dependencies;
-  vector<pair<int, int>> task_to_agent_and_index(num_of_tasks, {-1, -1});
+  // vector<pair<int, int>> task_to_agent_and_index(num_of_tasks/2, {-1, -1});
 
   goal_locations.clear();
   goal_locations.resize(num_of_agents);
   for (int i = 0; i < num_of_agents; i++) {
-    for (int j = 0; j < task_plan[i].size(); j++) {
-      auto task_idx = task_plan[i][j];
-      task_to_agent_and_index[task_idx] = {i, j};
-      goal_locations[i].push_back(task_locations[task_idx]);
+    for (int j = 0; j < task_plan[i].size() - 1; j+=2) {
+      auto pickup_idx = task_plan[i][j];
+      auto dropoff_idx = task_plan[i][j+1];
+      // task_to_agent_and_index[pickup_idx] = {i, j};
+      goal_locations[i].push_back(task_locations[pickup_idx]);
+      goal_locations[i].push_back(task_locations[dropoff_idx]);
     }
-    if (task_plan[i].size() == 0) {
-      goal_locations[i].push_back(start_locations[i]);
-    }
+    // if (task_plan[i].size() == 0) {
+    goal_locations[i].push_back(start_locations[i]);
+    // }
+    
   }
 
-  temporal_cons.clear();
-  temporal_cons.resize(num_of_agents * num_of_agents);
-  for (auto dependence : temporal_dependecies) {
-    int task_i, task_j, agent_i, i, agent_j, j;
-    std::tie(task_i, task_j) = dependence;
-    std::tie(agent_i, i) = task_to_agent_and_index[task_i];
-    std::tie(agent_j, j) = task_to_agent_and_index[task_j];
-    assert(agent_i >= 0 && agent_j >= 0);
-    cout << "temporal dep " << agent_i << "(" << i << ") -> " << agent_j << "("
-         << j << ")" << endl;
-    temporal_cons[agent_i * num_of_agents + agent_j].push_back({i, j});
-  }
+  // temporal_cons.clear();
+  // temporal_cons.resize(num_of_agents * num_of_agents);
+  // for (auto dependence : temporal_dependecies) {
+  //   int task_i, task_j, agent_i, i, agent_j, j;
+  //   std::tie(task_i, task_j) = dependence;
+  //   std::tie(agent_i, i) = task_to_agent_and_index[task_i];
+  //   std::tie(agent_j, j) = task_to_agent_and_index[task_j];
+  //   assert(agent_i >= 0 && agent_j >= 0);
+  //   cout << "temporal dep " << agent_i << "(" << i << ") -> " << agent_j << "("
+  //        << j << ")" << endl;
+  //   temporal_cons[agent_i * num_of_agents + agent_j].push_back({i, j});
+  // }
 }

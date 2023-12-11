@@ -1273,12 +1273,14 @@ bool CBS::validateSolution() const
     for (int a2 = 0; a2 < num_of_agents; a2++)
     {
       if (a1 == a2){continue;}
-      for (auto cons: search_engines[0]->instance.temporal_cons[a1 * num_of_agents + a2]){
-        auto from_landmark = cons.first;
-        auto to_landmark = cons.second;
-        if (paths[a1]->timestamps[from_landmark] >= paths[a2]->timestamps[to_landmark]){
-          cout << "Temporal conflict between " << a1  << "(" << from_landmark<< ")" << " and " << a2 << "(" << to_landmark<< ")" << endl;
-          return false;
+      if (!search_engines[0]->instance.temporal_cons.empty()){
+        for (auto cons: search_engines[0]->instance.temporal_cons[a1 * num_of_agents + a2]){
+          auto from_landmark = cons.first;
+          auto to_landmark = cons.second;
+          if (paths[a1]->timestamps[from_landmark] >= paths[a2]->timestamps[to_landmark]){
+            cout << "Temporal conflict between " << a1  << "(" << from_landmark<< ")" << " and " << a2 << "(" << to_landmark<< ")" << endl;
+            return false;
+          }
         }
       }
 

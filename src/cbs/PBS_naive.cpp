@@ -241,23 +241,25 @@ void PBS_naive::build_ct(ConstraintTable& ct, int agent, vector<vector<int>> adj
       cout <<  i  << ", ";
 
 
+      if (!search_engines[0]->instance.temporal_cons.empty()){
+        for (auto cons: search_engines[0]->instance.temporal_cons[agent * num_of_agents + i]){
+          auto from_landmark = cons.first;
+          auto to_landmark = cons.second;
+          // if (ct.leq_goal_time[from_landmark] == -1){
+          //   ct.leq_goal_time[from_landmark] = paths[i] ->timestamps[to_landmark] - 1;
+          // }else{
+            ct.leq_goal_time[from_landmark] = min(ct.leq_goal_time[from_landmark], paths[i] ->timestamps[to_landmark] - 1);
+            // }
+          // if (paths[agent]->timestamps[from_landmark] >= paths[i]->timestamps[to_landmark]){
+        }
+        for (auto cons: search_engines[0]->instance.temporal_cons[i * num_of_agents + agent]){
+          auto from_landmark = cons.first;
+          auto to_landmark = cons.second;
+          ct.g_goal_time[to_landmark] = max(ct.g_goal_time[to_landmark], paths[i] ->timestamps[from_landmark]);
+          ct.length_min = max(ct.length_min, paths[i] ->timestamps[from_landmark] + 1);
+          // if (paths[i]->timestamps[from_landmark] >= paths[agent]->timestamps[to_landmark]){
+        }
 
-      for (auto cons: search_engines[0]->instance.temporal_cons[agent * num_of_agents + i]){
-        auto from_landmark = cons.first;
-        auto to_landmark = cons.second;
-        // if (ct.leq_goal_time[from_landmark] == -1){
-        //   ct.leq_goal_time[from_landmark] = paths[i] ->timestamps[to_landmark] - 1;
-        // }else{
-          ct.leq_goal_time[from_landmark] = min(ct.leq_goal_time[from_landmark], paths[i] ->timestamps[to_landmark] - 1);
-          // }
-        // if (paths[agent]->timestamps[from_landmark] >= paths[i]->timestamps[to_landmark]){
-      }
-      for (auto cons: search_engines[0]->instance.temporal_cons[i * num_of_agents + agent]){
-        auto from_landmark = cons.first;
-        auto to_landmark = cons.second;
-        ct.g_goal_time[to_landmark] = max(ct.g_goal_time[to_landmark], paths[i] ->timestamps[from_landmark]);
-        ct.length_min = max(ct.length_min, paths[i] ->timestamps[from_landmark] + 1);
-        // if (paths[i]->timestamps[from_landmark] >= paths[agent]->timestamps[to_landmark]){
       }
     }
   }
